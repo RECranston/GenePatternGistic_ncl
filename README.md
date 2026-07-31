@@ -7,7 +7,7 @@ This documents how GISTIC 2.0 was set up and run on our shared Linux server (`ti
 * Ubuntu Linux server, no sudo access
 * Conda environment named `GenePattern`
 * GenePattern server installed to local directory
-* Access via SSH; GenePattern web UI reachable directly at `http://titania:8080/gp`
+* Access via SSH; GenePattern web UI reachable directly at `http://titania:8080/gp` or `http://{server_name}:8080/gp` or `http://{ip_address}:8080/gp`.
 
 ### 1. Java setup
 
@@ -23,11 +23,12 @@ Verify with `java -version` before proceeding - all subsequent steps assume this
 
 ### 2. Installing GenePattern server (headless)
 Download the latest release (GPserver.bin, build b439) from the [genepattern-server releases page](https://github.com/genepattern/genepattern-server/releases) and run a silent, headless install:
+If this download link becomes stale, please visit `https://github.com/genepattern/genepattern-server/releases/` to find a suitable alternative.
 ```
 mkdir -p ~/genepattern-install && cd ~/genepattern-install
 wget https://github.com/genepattern/genepattern-server/releases/download/v3.9_010926_b439/GPserver.bin
 chmod u+x GPserver.bin
-cat > installer.properties << 'EOF'
+cat > installer.properties << EOF
 USER_INSTALL_DIR=$HOME/GenePattern
 INSTALLER_UI=silent
 INSTALLER_TEMP_DIR=/tmp
@@ -40,18 +41,70 @@ export PS1=">"   # workaround for a known Ubuntu/LAX prompt-parsing bug
 Registration workaround - the old registration server no longer exists, so this property must be added manually or the server won't start:
 `echo "registeredServer=true" >> ~/GenePattern/resources/genepattern.properties`
 
-Starting the server:
+
+#### Convenience scripts
+Convenience `start_server.sh` / `stop_server.sh` scripts should be added to the install root for repeat use to avoid repeatedly killing/restarting the Java process by hand:
+`start_server.sh`:
 ```
-export PS1=">"   # same LAX bug applies here
-cd ~/GenePattern
-./StartGenePatternServer
+cat > ~/GenePattern/start_server.sh << 'EOF'
+#!/bin/bash
+# Starts the GenePattern server
+# NOTE: activate the GenePattern conda env (Java 8) before running this
+
+set -e
+
+export PS1=">"
+
+cd "$HOME/GenePattern"
+nohup ./StartGenePatternServer > "$HOME/GenePattern/logs/server_stdout.log" 2>&1 &
+echo "Started GenePattern server with PID $!"
+EOF
+
+chmod +x ~/GenePattern/start_server.sh
 ```
-Convenience `start_server.sh` / `stop_server.sh` scripts are added to the install root for repeat use (find/kill the com.zerog.lax.LAX java process, with a clean nohup start).
+`stop_server.sh`:
+```
+cat > ~/GenePattern/stop_server.sh << 'EOF'
+#!/bin/bash
+# Stops the GenePattern server by finding and killing its java process
+
+PID=$(ps aux | grep '[c]om.zerog.lax.LAX' | awk '{print $2}')
+
+if [ -z "$PID" ]; then
+    echo "No GenePattern server process found."
+    exit 0
+fi
+
+echo "Stopping GenePattern server (PID $PID)..."
+kill "$PID"
+
+# Wait up to 15 seconds for a clean shutdown
+for i in {1..15}; do
+    if ! ps -p "$PID" > /dev/null 2>&1; then
+        echo "Stopped."
+        exit 0
+    fi
+    sleep 1
+done
+
+echo "Process still running after 15s, forcing kill..."
+kill -9 "$PID"
+echo "Stopped (forced)."
+EOF
+
+chmod +x ~/GenePattern/stop_server.sh
+```
+Usage:
+```
+conda activate GenePattern
+~/GenePattern/start_server.sh
+~/GenePattern/stop_server.sh
+```
 
 
 ### 3. Installing the GISTIC_2.0 module
 
-The pull the module directly from Broad's [GenePatternModuleCatalog repo](https://github.com/genepattern/GenePatternModuleCatalog) (public GenePattern module repository is down).
+Pull the module directly from Broad's [GenePatternModuleCatalog repo](https://github.com/genepattern/GenePatternModuleCatalog) (public GenePattern module repository is down).
 
 Two versions exist here:
 * 6.15.28 - Dockerized. Not usable without Docker.
@@ -165,16 +218,15 @@ chmod +x gp_gistic2_from_seg
 zip -r ../GISTIC_2.0_v6.14.3_final.zip doc.html gp_gistic2_from_seg manifest paramgroups.json
 cd ..
 ```
-This is basically repackaged as a new version, which can be installed as a module on the GenePattern GUI by hovering over Modules, select Modules & Pipelines, then select Install from Zip (ensure you install for all users).
-
+This is basically repackaged as a new version, which can be installed as a module on the GenePattern GUI (as detailed in section 7).
 Separately, the extracted binary lost its executable bit during zip/reinstall - fix it directly on the server like so:
-`chmod +x ~/GenePattern/taskLib/GISTIC_2.0.6.14.3.11/gp_gistic2_from_seg`
+`chmod +x ~/GenePattern/taskLib/GISTIC_2.0.6.14.3.*/gp_gistic2_from_seg`
 
 ### 6. Reference genome file & input file formatting
 
 * Get the reference .mat files (hg19 for us) which are mirrored in Broad's own gistic2 GitHub repo - no need for the dead FTP server:  
   `wget https://github.com/broadinstitute/gistic2/raw/master/support/refgenefiles/hg19.UCSC.add_miR.140312.refgene.mat`
-* Ensure the original seg file (from connume) is tab-delimited with the following 6 columns only `"Sample"`,`"Chromosome"`,`"Start"`,`"End"`,`"Num_Probes"`,`"Seg.CN"`.
+* Ensure the original seg file (from conumee) is tab-delimited with the following 6 columns only `"Sample"`,`"Chromosome"`,`"Start"`,`"End"`,`"Num_Probes"`,`"Seg.CN"`.
   The "chr" prefix needs to also be removed from the `"Chromosome"` column prior to use here.
 
 ### 7. Final working job configuration
@@ -183,7 +235,7 @@ Separately, the extracted binary lost its executable bit during zip/reinstall - 
 * Start the local GenePattern server:
   `~/GenePattern/start_server.sh`
 * Navigate to `http://titania:8080/gp` or `http://{server_name}:8080/gp` or `http://{ip_address}:8080/gp`.
-* Ensure updated GISTIC2.0 module (`GISTIC_2.0_v6.14.3_final.zip`) is available. If not, install by hovering over Modules, select Modules & Pipelines, then select Install from Zip (ensure you install for all users).
+* Ensure updated GISTIC2.0 module (`GISTIC_2.0_v6.14.3_final.zip`) is available on the GenePattern GUI. If not, install by hovering over Modules, select Modules & Pipelines, then select Install from Zip (ensure you install for all users).
 * Navigate to GISTIC2.0 module via "Browse modules" and select it to be directed to the run page.
 * Use hg19.UCSC.add_miR.140312.refgene.mat as the reference.
 * Use pre-generated seg file (as per section 6).
@@ -191,7 +243,7 @@ Separately, the extracted binary lost its executable bit during zip/reinstall - 
 * In settings, set gene.gistic to yes.
 * Download the job files once completed from the job page.
 
-### 9. Cleanup notes
+### 8. Cleanup notes
 
 Installer staging directories (~/mcr_install, /tmp/*_extracted, downloaded .deb/.zip files) are safe to delete post-install.
 config_custom.yaml's job.commandPrefix override is server-wide - worth remembering if a future Docker-based module is installed on this server.
