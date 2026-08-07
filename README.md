@@ -221,8 +221,6 @@ zip -r ../GISTIC_2.0_v6.14.3_final.zip doc.html gp_gistic2_from_seg manifest par
 cd ..
 ```
 This is basically repackaged as a new version, which can be installed as a module on the GenePattern GUI (as detailed in section 7).
-Separately, the extracted binary lost its executable bit during zip/reinstall - fix it directly on the server like so:
-`chmod +x ~/GenePattern/taskLib/GISTIC_2.0.6.14.3.*/gp_gistic2_from_seg`
 
 ### 6. Reference genome file & input file formatting
 
@@ -238,6 +236,8 @@ Separately, the extracted binary lost its executable bit during zip/reinstall - 
   `~/GenePattern/start_server.sh`
 * Navigate to `http://titania:8080/gp` or `http://{server_name}:8080/gp` or `http://{ip_address}:8080/gp`.
 * Ensure updated GISTIC2.0 module (`GISTIC_2.0_v6.14.3_final.zip`) is available on the GenePattern GUI. If not, install by hovering over Modules, select Modules & Pipelines, then select Install from Zip (ensure you install for all users).
+Separately, the extracted binary lost its executable bit during zip/reinstall - fix it directly on the server like so:
+`chmod +x ~/GenePattern/taskLib/GISTIC_2.0.6.14.3.*/gp_gistic2_from_seg`
 * Navigate to GISTIC2.0 module via "Browse modules" and select it to be directed to the run page.
 * Use hg19.UCSC.add_miR.140312.refgene.mat as the reference.
 * Use pre-generated seg file (as per section 6).
