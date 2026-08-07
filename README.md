@@ -44,7 +44,7 @@ Registration workaround - the old registration server no longer exists, so this 
 
 #### Convenience scripts
 Convenience `start_server.sh` / `stop_server.sh` scripts should be added to the install root for repeat use to avoid repeatedly killing/restarting the Java process by hand. First change directory, `cd ~/GenePattern` then:  
-Create `start_server.sh` using a text editor of choice:
+Create `start_server.sh`:
 ```
 cat > ~/GenePattern/start_server.sh << 'EOF'
 #!/bin/bash
@@ -60,7 +60,7 @@ nohup ./StartGenePatternServer > "$HOME/GenePattern/logs/server_stdout.log" 2>&1
 echo "Started GenePattern server with PID $!"
 EOF
 ```
-Create `stop_server.sh` using a text editor of choice:
+Create `stop_server.sh`:
 ```
 cat > ~/GenePattern/stop_server.sh << 'EOF'
 #!/bin/bash
