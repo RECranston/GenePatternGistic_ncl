@@ -44,7 +44,7 @@ Registration workaround - the old registration server no longer exists, so this 
 
 #### Convenience scripts
 Convenience `start_server.sh` / `stop_server.sh` scripts should be added to the install root for repeat use to avoid repeatedly killing/restarting the Java process by hand:
-`start_server.sh`:
+Create `start_server.sh` using a text editor of choice:
 ```
 cat > ~/GenePattern/start_server.sh << 'EOF'
 #!/bin/bash
@@ -59,10 +59,8 @@ cd "$HOME/GenePattern"
 nohup ./StartGenePatternServer > "$HOME/GenePattern/logs/server_stdout.log" 2>&1 &
 echo "Started GenePattern server with PID $!"
 EOF
-
-chmod +x ~/GenePattern/start_server.sh
 ```
-`stop_server.sh`:
+Create `stop_server.sh` using a text editor of choice:
 ```
 cat > ~/GenePattern/stop_server.sh << 'EOF'
 #!/bin/bash
@@ -94,6 +92,10 @@ EOF
 
 chmod +x ~/GenePattern/stop_server.sh
 ```
+Make both scripts executable:  
+`chmod +x ~/GenePattern/start_server.sh`  
+`chmod +x ~/GenePattern/stop_server.sh`
+
 Usage:
 ```
 conda activate GenePattern
