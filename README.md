@@ -90,6 +90,7 @@ kill -9 "$PID"
 echo "Stopped (forced)."
 EOF
 ```
+
 Make both scripts executable:  
 `chmod +x ~/GenePattern/start_server.sh`  
 `chmod +x ~/GenePattern/stop_server.sh`
