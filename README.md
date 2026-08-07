@@ -89,8 +89,6 @@ echo "Process still running after 15s, forcing kill..."
 kill -9 "$PID"
 echo "Stopped (forced)."
 EOF
-
-chmod +x ~/GenePattern/stop_server.sh
 ```
 Make both scripts executable:  
 `chmod +x ~/GenePattern/start_server.sh`  
