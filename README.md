@@ -58,6 +58,7 @@ export PS1=">"
 cd "$HOME/GenePattern"
 nohup ./StartGenePatternServer > "$HOME/GenePattern/logs/server_stdout.log" 2>&1 &
 echo "Started GenePattern server with PID $!"
+echo "Navigate to http://{server_name}:8080/gp or http://{ip_address}:8080/gp"
 EOF
 ```
 Create `stop_server.sh`:
